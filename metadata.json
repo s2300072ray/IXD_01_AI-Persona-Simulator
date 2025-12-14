@@ -1,0 +1,5 @@
+{
+  "name": "IXD_01_AI Persona Simulator",
+  "description": "A research-grade AI simulator for generating and interacting with detailed human personas based on psychological and health frameworks (WHO, Big Five, Kouprie & Visser).",
+  "requestFramePermissions": []
+}
