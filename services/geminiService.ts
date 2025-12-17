@@ -1,8 +1,17 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Persona, ChatMessage, ResearchMetrics, PersonaInputData, EmotionState } from '../types';
 
-// Initialize Gemini Client
-// Note: process.env.API_KEY is assumed to be available
+/* 
+ * SECURITY NOTE:
+ * The API Key is accessed via process.env.API_KEY. 
+ * NEVER hardcode your API key (e.g., "AIza...") directly in this file.
+ * Keeping it in process.env ensures it is not committed to version control (GitHub).
+ * 
+ * COST NOTE:
+ * This service uses 'gemini-2.5-flash' and 'gemini-2.5-flash-image'.
+ * These are high-performance, low-cost models suitable for repeated testing.
+ */
+
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
@@ -12,7 +21,7 @@ const getAiClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-// System Prompt Construction (Based on Spec Section 5 & System Prompt Section)
+// System Prompt Construction
 const SYSTEM_PROMPT_CORE = `
 You are the "AI Persona Simulator" engine. Your goal is to generate a realistic, consistent human persona based on the "AI Persona Simulator Specification v3.0".
 
@@ -92,7 +101,6 @@ export const generateAvatar = async (description: string): Promise<string | unde
     return undefined;
   } catch (e) {
     console.error("Avatar generation failed", e);
-    // Fallback to null, UI will use placeholder
     return undefined;
   }
 };
@@ -129,7 +137,7 @@ export const generatePersona = async (input: PersonaInputData): Promise<Persona>
     
     const data = JSON.parse(text);
     
-    // Generate Avatar in parallel or sequence? Sequence to ensure we have description
+    // Generate Avatar
     let avatarBase64 = undefined;
     if (data.avatarDesc) {
       avatarBase64 = await generateAvatar(data.avatarDesc);
@@ -151,7 +159,6 @@ export const generateChatResponse = async (
 ): Promise<{ text: string, emotion: EmotionState }> => {
   const ai = getAiClient();
 
-  // Construct the system instruction for the CHAT SESSION specifically
   const chatSystemPrompt = `
     You are acting as ${persona.name}, a ${persona.age}-year-old ${persona.occupation}.
     
@@ -169,13 +176,11 @@ export const generateChatResponse = async (
     - "emotion": One of [${Object.values(EmotionState).join(', ')}] representing your current feeling.
   `;
 
-  // Convert history to Gemini format
   const contents = history.map(msg => ({
     role: msg.role,
     parts: [{ text: msg.text }]
   }));
 
-  // Add current user message
   contents.push({
     role: 'user',
     parts: [{ text: currentMessage }]
